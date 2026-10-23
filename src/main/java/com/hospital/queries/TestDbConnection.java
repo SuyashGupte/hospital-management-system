@@ -212,11 +212,11 @@ public class TestDbConnection extends HibernateDriver {
 //			for (SelledDrug selledDrug : selledDrugs) {
 //				System.out.println(selledDrug.getPatient().getName());
 //			}
-//			testDbConnection.addRoomType();
-//			testDbConnection.addBloodGroup();
-//			testDbConnection.addCategory();
-//			testDbConnection.addShiftTime();
-//			testDbConnection.addAdmin();
+			testDbConnection.addRoomType();
+			testDbConnection.addBloodGroup();
+			testDbConnection.addCategory();
+			testDbConnection.addShiftTime();
+			testDbConnection.addAdmin();
 
 			// testDbConnection.addPatient();
 
@@ -268,9 +268,10 @@ public class TestDbConnection extends HibernateDriver {
 			// System.out.println(message.getMessageBody());
 			// }
 		} catch (Exception e) {
-
 			e.printStackTrace();
 		}
+		System.out.println("Seed complete.");
+		System.exit(0);
 	}
 
 }

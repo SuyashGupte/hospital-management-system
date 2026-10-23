@@ -14,7 +14,7 @@ A Java EE web application for managing hospital operations including patient man
 | Frontend | JSP + JSTL, HTML/CSS |
 | MVC Framework | Apache Struts 2.5 |
 | ORM / Persistence | Hibernate 4.3 + JPA 2.1 |
-| Database | Oracle Database (JDBC thin driver, ojdbc6) |
+| Database | Oracle Database (JDBC thin driver, ojdbc8) |
 | Reporting | JasperReports 6.2 + iText 2.1.7 |
 | File Upload | Apache Commons FileUpload / Commons IO |
 | Build Tool | Maven 3 |
@@ -108,8 +108,8 @@ Hibernate is configured in [`src/main/resources/hibernate.cfg.xml`](src/main/res
 
 ```xml
 <property name="hibernate.connection.url">jdbc:oracle:thin:@//127.0.0.1:1521/FREEPDB1</property>
-<property name="hibernate.connection.username">YOUR_APP_USER</property>
-<property name="hibernate.connection.password">YOUR_APP_PASSWORD</property>
+<property name="hibernate.connection.username">hadeel</property>
+<property name="hibernate.connection.password">hadeel</property>
 <property name="hibernate.hbm2ddl.auto">update</property>
 ```
 
@@ -134,8 +134,8 @@ Both Oracle and Tomcat run inside a single Podman **pod** named `hospital`, shar
 │                                                                             │
 │  oracle   gvenzl/oracle-free:23-slim-faststart                             │
 │           ORACLE_SID=FREE   service name = FREEPDB1                        │
-│           APP_USER=<app_user>   APP_USER_PASSWORD=<app_password>           │
-│           ORACLE_PASSWORD=<sys_password>  (SYS password)                   │
+│           APP_USER=hadeel   APP_USER_PASSWORD=hadeel                       │
+│           ORACLE_PASSWORD=sys_123  (SYS/SYSTEM password)                   │
 │                                                                             │
 │  tomcat   tomcat:9-jdk8                                                    │
 │           bind-mount:                                                       │
@@ -154,22 +154,24 @@ Both containers share `localhost` inside the pod, so Hibernate connects to Oracl
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/salahatwa/Hospital-Management-System.git
-cd Hospital-Management-System
+git clone https://github.com/SuyashGupte/hospital-management-system.git
+cd hospital-management-system
 ```
 
-### 2. Install the Oracle JDBC driver into your local Maven repository
-
-The `ojdbc6` JAR is not available in Maven Central. Download it from [Oracle's website](https://www.oracle.com/database/technologies/jdbc-downloads.html) and install it manually:
+### 2. Set credentials
 
 ```bash
-mvn install:install-file \
-  -Dfile=/path/to/ojdbc6.jar \
-  -DgroupId=com.oracle \
-  -DartifactId=ojdbc6 \
-  -Dversion=11.2.0.3 \
-  -Dpackaging=jar
+bash setup-credentials.sh hadeel hadeel
 ```
+
+This writes the DB username and password into [`src/main/resources/hibernate.cfg.xml`](src/main/resources/hibernate.cfg.xml).
+To use different credentials, pass them as arguments:
+
+```bash
+bash setup-credentials.sh <app_user> <app_password>
+```
+
+> The `app_user` and `app_password` must match what you pass to `-e APP_USER` and `-e APP_USER_PASSWORD` when starting the Oracle container in step 5.
 
 ### 3. Build the project
 
@@ -191,17 +193,54 @@ podman pod create --name hospital -p 1521:1521 -p 8080:8080
 podman run -d --pod hospital \
   --name oracle \
   --hostname hospital \
-  -e ORACLE_PASSWORD=<your_sys_password> \
-  -e APP_USER=<your_app_user> \
-  -e APP_USER_PASSWORD=<your_app_password> \
+  -e ORACLE_PASSWORD=sys_123 \
+  -e APP_USER=hadeel \
+  -e APP_USER_PASSWORD=hadeel \
   docker.io/gvenzl/oracle-free:23-slim-faststart
 ```
 
-The image automatically creates the application user and the `FREEPDB1` pluggable database on first boot.
-Update [`src/main/resources/hibernate.cfg.xml`](src/main/resources/hibernate.cfg.xml) to match the credentials you chose above.
-Wait ~60 seconds for Oracle to be ready before starting Tomcat.
+The image automatically creates the `hadeel` application user and the `FREEPDB1` pluggable database on first boot.
 
-### 6. Start Tomcat
+**Wait for Oracle to be fully ready before proceeding — this is required.**
+
+The health check can take a long time. Instead, watch the logs for the ready message:
+
+```bash
+podman logs -f oracle 2>&1 | grep -m1 "DATABASE IS READY TO USE"
+```
+
+This exits as soon as Oracle is ready (usually 60–90 seconds). Then proceed with the seed.
+
+### 6. Seed the database (first run only)
+
+#### 6a. Bootstrap lookup data + admin user
+
+```bash
+CP="target/classes:target/HospitalSystemV2-1.0-SNAPSHOT/WEB-INF/lib/*"
+java -cp "$CP" com.hospital.queries.TestDbConnection
+```
+
+> If the seed hangs indefinitely, Oracle is not ready yet. Kill it (`Ctrl+C`), re-run the log watch above, then retry.
+
+#### 6b. Load demo staff, patients, rooms, and drugs (optional)
+
+```bash
+CP="target/classes:target/HospitalSystemV2-1.0-SNAPSHOT/WEB-INF/lib/*"
+mkdir -p target/sample-data
+javac -cp "$CP" -d target/sample-data sample-data/SampleData.java
+java  -cp "target/sample-data:$CP" SampleData
+```
+
+Idempotent — exits immediately if a Doctor record already exists. Every demo employee has password `123456`.
+
+#### 6c. Load demo inbox messages (optional)
+
+```bash
+podman exec -i oracle sqlplus hadeel/hadeel@//localhost:1521/FREEPDB1 @/dev/stdin \
+  < sample-data/messages.sql
+```
+
+### 7. Start Tomcat
 
 ```bash
 podman run -d --pod hospital \
@@ -211,56 +250,13 @@ podman run -d --pod hospital \
   docker.io/library/tomcat:9-jdk8
 ```
 
-Hibernate will auto-create all tables on first deployment (`hbm2ddl.auto=update`).
-
-### 7. Seed the database (first run only)
-
-#### 7a. Bootstrap lookup data + admin user
-
-Uncomment the seed calls in [`src/main/java/com/hospital/queries/TestDbConnection.java`](src/main/java/com/hospital/queries/TestDbConnection.java) (lines 215–219):
-
-```java
-testDbConnection.addCategory();    // 6 department categories  (IDs 1–6)
-testDbConnection.addBloodGroup();  // 4 blood groups           (IDs 7–10)
-testDbConnection.addRoomType();    // 4 room types             (IDs 11–14)
-testDbConnection.addShiftTime();   // 3 nurse shifts           (IDs 15–17)
-testDbConnection.addAdmin();       // username: admin  (default credentials set in TestDbConnection.java)
-```
-
-Then compile and run from the project root:
-
-```bash
-CP="target/classes:target/HospitalSystemV2-1.0-SNAPSHOT/WEB-INF/lib/*"
-java -cp "$CP" com.hospital.queries.TestDbConnection
-```
-
-Re-comment those calls afterwards to prevent duplicate inserts on re-run.
-
-#### 7b. Load demo staff, patients, rooms, and drugs (optional)
-
-```bash
-CP="target/classes:target/HospitalSystemV2-1.0-SNAPSHOT/WEB-INF/lib/*"
-mkdir -p target/sample-data
-javac -cp "$CP" -d target/sample-data sample-data/SampleData.java
-java  -cp "target/sample-data:$CP" SampleData
-```
-
-Idempotent — exits immediately if a Doctor record already exists. Every demo employee uses the default credentials set in [`SampleData.java`](sample-data/SampleData.java).
-
-#### 7c. Load demo inbox messages (optional)
-
-```bash
-podman exec -i oracle sqlplus <app_user>/<app_password>@//localhost:1521/FREEPDB1 @/dev/stdin \
-  < sample-data/messages.sql
-```
-
 ### 8. Access the application
 
 ```
 http://localhost:8080/HospitalSystemV2/
 ```
 
-Login with the admin credentials configured in [`TestDbConnection.java`](src/main/java/com/hospital/queries/TestDbConnection.java).
+Login: **username** `admin` · **password** `123456`
 
 ---
 
