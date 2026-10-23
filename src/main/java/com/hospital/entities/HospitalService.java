@@ -13,16 +13,18 @@ import com.hospital.models.Message;
 import com.hospital.models.NurseServiceTime;
 import com.hospital.models.Room;
 import com.hospital.models.SelledDrug;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class HospitalService extends HibernateDriver
         implements AdminDAO, UserDAO, ReceptioniestDAO, DoctorDAO, AccountantDAO, PharmatiestDAO, NurseDAO {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1L;
+	/**
+	 *
+	 */
+
+	private static final long serialVersionUID = 1L;
 
     private static final HospitalService HOSPITAL_SERVICE = new HospitalService();
 

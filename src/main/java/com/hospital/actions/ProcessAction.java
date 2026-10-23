@@ -10,7 +10,8 @@ import com.opensymphony.xwork2.ActionSupport;
 
 public class ProcessAction extends ActionSupport {
 
-    private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = 1L;
 
     private AdminListener adminListener = AdminListener.getInstance();
     private UserListener userListener = UserListener.getInstance();

@@ -1,10 +1,8 @@
 package com.hospital.models;
 // Generated Apr 26, 2017 7:53:39 PM by Hibernate Tools 4.3.1
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -75,15 +73,15 @@ public class Employee implements java.io.Serializable {
 
 	@OneToMany(fetch = FetchType.EAGER , targetEntity = WorkExperince.class, cascade = { CascadeType.ALL  })
 	@JoinColumn(name = "employee_id")
-	private List<WorkExperince> workExperinces;
+	private Set<WorkExperince> workExperinces;
 
 	@OneToMany(fetch = FetchType.EAGER, targetEntity = Qualification.class, cascade = { CascadeType.ALL })
 	@JoinColumn(name = "employee_id")
-	private List<Qualification> qualifications;
+	private Set<Qualification> qualifications;
 
 	public Employee() {
-		workExperinces=new ArrayList<>();
-		qualifications=new ArrayList<>();
+		workExperinces=new HashSet<>();
+		qualifications=new HashSet<>();
 	}
 
 	public Integer getEmployeeId() {
@@ -199,19 +197,19 @@ public class Employee implements java.io.Serializable {
 		this.category = category;
 	}
 
-	public List<WorkExperince> getWorkExperinces() {
+	public Set<WorkExperince> getWorkExperinces() {
 		return workExperinces;
 	}
 
-	public void setWorkExperinces(List<WorkExperince> workExperinces) {
+	public void setWorkExperinces(Set<WorkExperince> workExperinces) {
 		this.workExperinces = workExperinces;
 	}
 
-	public List<Qualification> getQualifications() {
+	public Set<Qualification> getQualifications() {
 		return qualifications;
 	}
 
-	public void setQualifications(List<Qualification> qualifications) {
+	public void setQualifications(Set<Qualification> qualifications) {
 		this.qualifications = qualifications;
 	}
 

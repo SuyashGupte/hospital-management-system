@@ -11,7 +11,8 @@ import com.opensymphony.xwork2.ActionSupport;
 
 public class ReportAction extends ActionSupport {
 
-    private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = 1L;
 
     private ReportListener reportListener = ReportListener.getInstance();
 

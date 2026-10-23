@@ -10,12 +10,12 @@ A Java EE web application for managing hospital operations including patient man
 
 | Layer | Technology |
 |---|---|
-| Language | Java 8 |
+| Language | Java 17 |
 | Frontend | JSP + JSTL, HTML/CSS |
-| MVC Framework | Apache Struts 2.5 |
-| ORM / Persistence | Hibernate 4.3 + JPA 2.1 |
+| MVC Framework | Apache Struts 6.8 |
+| ORM / Persistence | Hibernate 5.6 + JPA 2.2 |
 | Database | Oracle Database (JDBC thin driver, ojdbc8) |
-| Reporting | JasperReports 6.2 + iText 2.1.7 |
+| Reporting | JasperReports 7.0 + OpenPDF |
 | File Upload | Apache Commons FileUpload / Commons IO |
 | Build Tool | Maven 3 |
 | Packaging | WAR |
@@ -119,7 +119,7 @@ Schema is auto-created/updated by Hibernate on first run (`hbm2ddl.auto=update`)
 
 ## Prerequisites
 
-- **Java JDK 8**
+- **Java JDK 17**
 - **Maven 3.x**
 - **Podman** — used to run Oracle DB and Tomcat as containers
 
@@ -137,7 +137,7 @@ Both Oracle and Tomcat run inside a single Podman **pod** named `hospital`, shar
 │           APP_USER=hadeel   APP_USER_PASSWORD=hadeel                       │
 │           ORACLE_PASSWORD=sys_123  (SYS/SYSTEM password)                   │
 │                                                                             │
-│  tomcat   tomcat:9-jdk8                                                    │
+│  tomcat   tomcat:9-jdk17                                                   │
 │           bind-mount:                                                       │
 │             ./target/HospitalSystemV2-1.0-SNAPSHOT.war                     │
 │             → /usr/local/tomcat/webapps/HospitalSystemV2.war               │
@@ -247,7 +247,7 @@ podman run -d --pod hospital \
   --name tomcat \
   --hostname hospital \
   -v "$(pwd)/target/HospitalSystemV2-1.0-SNAPSHOT.war:/usr/local/tomcat/webapps/HospitalSystemV2.war:ro" \
-  docker.io/library/tomcat:9-jdk8
+  docker.io/library/tomcat:9-jdk17
 ```
 
 ### 8. Access the application

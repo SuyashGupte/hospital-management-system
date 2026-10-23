@@ -5,7 +5,6 @@
  */
 package com.hospital.DbConfig;
 
-import org.hibernate.cfg.AnnotationConfiguration;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.SessionFactory;
 

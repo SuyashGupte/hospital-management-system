@@ -9,7 +9,8 @@ import com.opensymphony.xwork2.ActionSupport;
 
 public class DoctorAction extends ActionSupport {
 
-    private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = 1L;
 
     private DoctorListener doctorListener = DoctorListener.getInstance();
 

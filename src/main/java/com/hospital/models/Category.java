@@ -1,5 +1,6 @@
 package com.hospital.models;
 
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -14,6 +15,7 @@ public class Category implements java.io.Serializable {
 	/**
 	 * 
 	 */
+
 	private static final long serialVersionUID = 1L;
 	
 

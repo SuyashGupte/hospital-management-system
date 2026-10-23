@@ -2,10 +2,10 @@ package com.hospital.actions;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -74,7 +74,7 @@ public class AdminListener {
             String[] degrees = request.getParameterValues("Degree[]");
             String[] educationDates = request.getParameterValues("educationDate[]");
 
-            List<Qualification> qualifications = new ArrayList<>();
+            Set<Qualification> qualifications = new HashSet<>();
 
             for (int i = 0; i < instituteNames.length; i++) {
                 Qualification qualification = new Qualification();
@@ -91,7 +91,7 @@ public class AdminListener {
             String[] startDates = request.getParameterValues("startDate[]");
             String[] endDates = request.getParameterValues("endDate[]");
 
-            List<WorkExperince> workExperinces = new ArrayList<>();
+            Set<WorkExperince> workExperinces = new HashSet<>();
 
             for (int i = 0; i < nameOfOrganizations.length; i++) {
                 WorkExperince workExperince = new WorkExperince();
@@ -197,8 +197,8 @@ public class AdminListener {
             String[] degrees = request.getParameterValues("Degree[]");
             String[] educationDates = request.getParameterValues("educationDate[]");
 
-            List<Qualification> qualifications = new ArrayList<>();
-            List<WorkExperince> workExperinces = new ArrayList<>();
+            Set<Qualification> qualifications = new HashSet<>();
+            Set<WorkExperince> workExperinces = new HashSet<>();
 
             if (instituteNames != null) {
                 for (int i = 0; i < instituteNames.length; i++) {
