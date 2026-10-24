@@ -4,7 +4,7 @@
 echo "==> Stopping and removing containers..."
 podman pod stop hospital 2>/dev/null
 podman pod rm -f hospital 2>/dev/null
-podman rm -f oracle tomcat 2>/dev/null
+podman rm -f oracle-legacy oracle tomcat 2>/dev/null
 
 echo "==> Resetting credentials in hibernate.cfg.xml..."
 sed -i.bak \

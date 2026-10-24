@@ -130,14 +130,14 @@ Schema is auto-created/updated by Hibernate on first run (`hbm2ddl.auto=update`)
 Both Oracle and Tomcat run inside a single Podman **pod** named `hospital`, sharing a network namespace. The WAR is bind-mounted directly from the build output into the Tomcat container — no manual copy step needed after a rebuild.
 
 ```
-┌─── pod: hospital  (ports: 1521→1521, 8080→8080) ──────────────────────────┐
+┌─── pod: hospital  (ports: 1521→1521, 8000→8080) ──────────────────────────┐
 │                                                                             │
-│  oracle   gvenzl/oracle-free:23-slim-faststart                             │
-│           ORACLE_SID=FREE   service name = FREEPDB1                        │
-│           APP_USER=hadeel   APP_USER_PASSWORD=hadeel                       │
-│           ORACLE_PASSWORD=sys_123  (SYS/SYSTEM password)                   │
+│  oracle-legacy  gvenzl/oracle-free:23-slim-faststart                       │
+│                 ORACLE_SID=FREE   service name = FREEPDB1                  │
+│                 APP_USER=hadeel   APP_USER_PASSWORD=hadeel                 │
+│                 ORACLE_PASSWORD=sys_123  (SYS/SYSTEM password)             │
 │                                                                             │
-│  tomcat   tomcat:9-jdk8                                                    │
+│  tomcat         tomcat:9-jdk8                                              │
 │           bind-mount:                                                       │
 │             ./target/HospitalSystemV2-1.0-SNAPSHOT.war                     │
 │             → /usr/local/tomcat/webapps/HospitalSystemV2.war               │
@@ -184,14 +184,14 @@ The WAR is produced at `target/HospitalSystemV2-1.0-SNAPSHOT.war`.
 ### 4. Create the Podman pod
 
 ```bash
-podman pod create --name hospital -p 1521:1521 -p 8080:8080
+podman pod create --name hospital -p 1521:1521 -p 8000:8080
 ```
 
 ### 5. Start Oracle
 
 ```bash
 podman run -d --pod hospital \
-  --name oracle \
+  --name oracle-legacy \
   --hostname hospital \
   -e ORACLE_PASSWORD=sys_123 \
   -e APP_USER=hadeel \
@@ -206,7 +206,7 @@ The image automatically creates the `hadeel` application user and the `FREEPDB1`
 The health check can take a long time. Instead, watch the logs for the ready message:
 
 ```bash
-podman logs -f oracle 2>&1 | grep -m1 "DATABASE IS READY TO USE"
+podman logs -f oracle-legacy 2>&1 | grep -m1 "DATABASE IS READY TO USE"
 ```
 
 This exits as soon as Oracle is ready (usually 60–90 seconds). Then proceed with the seed.
@@ -236,7 +236,7 @@ Idempotent — exits immediately if a Doctor record already exists. Every demo e
 #### 6c. Load demo inbox messages (optional)
 
 ```bash
-podman exec -i oracle sqlplus hadeel/hadeel@//localhost:1521/FREEPDB1 @/dev/stdin \
+podman exec -i oracle-legacy sqlplus hadeel/hadeel@//localhost:1521/FREEPDB1 @/dev/stdin \
   < sample-data/messages.sql
 ```
 
@@ -253,7 +253,7 @@ podman run -d --pod hospital \
 ### 8. Access the application
 
 ```
-http://localhost:8080/HospitalSystemV2/
+http://localhost:8000/HospitalSystemV2/
 ```
 
 Login: **username** `admin` · **password** `123456`

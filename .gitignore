@@ -1,3 +1,4 @@
 /target/
 .bob
-README.md
+/frontend
+/backend
