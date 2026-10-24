@@ -1,0 +1,134 @@
+flowchart TD
+classDef viewLayer fill:#001141,stroke:#4589ff,stroke-width:2px,color:#ffffff
+classDef controllerLayer fill:#081a1c,stroke:#009d9a,stroke-width:2px,color:#ffffff
+classDef modelLayer fill:#2a0a18,stroke:#ee5396,stroke-width:2px,color:#ffffff
+
+subgraph view["View/UI Layer"]
+indexJsp["index.jsp login and patient sign up"]:::viewLayer
+homeJsp["home.jsp with admin dashboard.jsp"]:::viewLayer
+sideBar["side-bar.jsp role based menu"]:::viewLayer
+empJsp["empmgmt.jsp with addEmployee and updateEmployee"]:::viewLayer
+roomJsp["mgmtroom.jsp and servicetime.jsp"]:::viewLayer
+patientJsp["patientmgmt.jsp and bookBed.jsp"]:::viewLayer
+doctorJsp["dieseasePatient.jsp"]:::viewLayer
+pharmJsp["drugmgmt.jsp and selldrug.jsp"]:::viewLayer
+feesJsp["computefees.jsp"]:::viewLayer
+msgJsp["compose inbox sentMail viewmessage changePassword"]:::viewLayer
+htmlForms["HTML forms with HTML5 validation and multipart upload"]:::viewLayer
+scriptlets["JSP scriptlets calling HospitalService for lists"]:::viewLayer
+end
+
+subgraph controller["Controller/Service Layer"]
+webXml["web.xml Struts2 filter on all URLs"]:::controllerLayer
+strutsXml["struts.xml action mappings"]:::controllerLayer
+loginAction["LoginAction login and logout"]:::controllerLayer
+processAction["ProcessAction dispatcher by ActionType"]:::controllerLayer
+actionType["ActionType enum"]:::controllerLayer
+wrapperActions["AdminAction DoctorAction PharmatiestAction ReceptioniestAction UserAction ReportAction AccountancyAction"]:::controllerLayer
+adminListener["AdminListener"]:::controllerLayer
+receptionListener["ReceptioniestListener"]:::controllerLayer
+doctorListener["DoctorListener"]:::controllerLayer
+pharmListener["PharmatiestListener"]:::controllerLayer
+accountListener["AccountancyListener"]:::controllerLayer
+userListener["UserListener"]:::controllerLayer
+reportListener["ReportListener"]:::controllerLayer
+utils["PasswordEncryption and FormateDate"]:::controllerLayer
+jasper["JasperReports PDF engine with jrxml templates"]:::controllerLayer
+session["HttpSession attribute employee"]:::controllerLayer
+end
+
+subgraph model["Model/Data Layer"]
+daoIfaces["AdminDAO UserDAO ReceptioniestDAO DoctorDAO AccountantDAO PharmatiestDAO NurseDAO"]:::modelLayer
+hospitalService["HospitalService singleton"]:::modelLayer
+hibernateDriver["HibernateDriver and HibernateUtil session and transaction"]:::modelLayer
+employeeEntity["Employee single table with Doctor Nurse Lab Xray Pharmatiest Receptioniest Accountant"]:::modelLayer
+patientEntities["Patient NextOfKin BloodGroup"]:::modelLayer
+roomEntities["Room RoomType BookBed"]:::modelLayer
+clinicalEntities["Disease Drug SelledDrug"]:::modelLayer
+staffEntities["Category Qualification WorkExperince ShiftTime NurseServiceTime"]:::modelLayer
+messageEntity["Message"]:::modelLayer
+dtos["PatientDrugInvoice and EmployeeStatatistic DTOs"]:::modelLayer
+db[("Oracle database via hibernate.cfg.xml")]:::modelLayer
+end
+
+indexJsp --> htmlForms
+homeJsp --> sideBar
+homeJsp --> scriptlets
+empJsp --> htmlForms
+roomJsp --> htmlForms
+patientJsp --> htmlForms
+doctorJsp --> htmlForms
+pharmJsp --> htmlForms
+feesJsp --> htmlForms
+msgJsp --> htmlForms
+
+htmlForms --> webXml
+webXml --> strutsXml
+strutsXml --> loginAction
+strutsXml --> processAction
+strutsXml --> wrapperActions
+processAction --> actionType
+processAction --> adminListener
+processAction --> receptionListener
+processAction --> doctorListener
+processAction --> pharmListener
+processAction --> accountListener
+processAction --> userListener
+processAction --> reportListener
+wrapperActions --> adminListener
+wrapperActions --> receptionListener
+wrapperActions --> doctorListener
+wrapperActions --> pharmListener
+wrapperActions --> accountListener
+wrapperActions --> userListener
+wrapperActions --> reportListener
+loginAction --> utils
+loginAction --> session
+adminListener --> utils
+userListener --> utils
+userListener --> session
+reportListener --> jasper
+pharmListener --> jasper
+
+loginAction --> hospitalService
+adminListener --> daoIfaces
+receptionListener --> daoIfaces
+doctorListener --> daoIfaces
+pharmListener --> daoIfaces
+accountListener --> daoIfaces
+userListener --> daoIfaces
+reportListener --> daoIfaces
+scriptlets --> daoIfaces
+daoIfaces --> hospitalService
+hospitalService --> hibernateDriver
+hibernateDriver --> employeeEntity
+hibernateDriver --> patientEntities
+hibernateDriver --> roomEntities
+hibernateDriver --> clinicalEntities
+hibernateDriver --> staffEntities
+hibernateDriver --> messageEntity
+employeeEntity --> db
+patientEntities --> db
+roomEntities --> db
+clinicalEntities --> db
+staffEntities --> db
+messageEntity --> db
+db --> hibernateDriver
+hospitalService --> dtos
+dtos --> jasper
+
+adminListener --> empJsp
+adminListener --> roomJsp
+receptionListener --> patientJsp
+doctorListener --> doctorJsp
+pharmListener --> pharmJsp
+accountListener --> feesJsp
+userListener --> msgJsp
+loginAction --> homeJsp
+jasper --> pharmJsp
+
+subgraph legend["Legend"]
+viewExample["View/UI Components"]:::viewLayer
+controllerExample["Controller/Service Components"]:::controllerLayer
+modelExample["Model/Data Components"]:::modelLayer
+end

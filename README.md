@@ -1,151 +1,104 @@
 # Hospital Management System
 
-A Java EE web application for managing hospital operations including patient management, staff administration, pharmacy, reporting, and internal messaging.
+A role-based hospital administration system for managing employees, patients, rooms and beds, diagnoses, pharmacy stock and sales, patient billing, nurse shifts, internal messaging, and PDF reports.
+
+The project is split into two applications:
+
+| Folder | What it is |
+|---|---|
+| [`backend/`](backend/README.md) | Spring Boot REST API (JWT security, Hibernate 5 + Oracle, JasperReports) |
+| [`frontend/`](frontend) | React + TypeScript single-page app (Vite, Carbon Design System) |
+
+The earlier Struts/JSP implementation has been removed from this repository. Its data-access layer (`models`, `entities`, `DbConfig`, `utils`) lives on unchanged inside `backend/`.
+
+See [`architecture.md`](architecture.md) for the full architecture, business rules and data model.
 
 ---
 
-## Architecture
-
-### Technology Stack
+## Technology Stack
 
 | Layer | Technology |
 |---|---|
-| Language | Java 17 |
-| Frontend | JSP + JSTL, HTML/CSS |
-| MVC Framework | Apache Struts 6.8 |
-| ORM / Persistence | Hibernate 5.6 + JPA 2.2 |
-| Database | Oracle Database (JDBC thin driver, ojdbc8) |
-| Reporting | JasperReports 7.0 + OpenPDF |
-| File Upload | Apache Commons FileUpload / Commons IO |
-| Build Tool | Maven 3 |
-| Packaging | WAR |
-| Server | Apache Tomcat 8+ / JBoss / WildFly |
+| Frontend | React 19, TypeScript, Vite, React Router 7, Axios, `@carbon/react`, Sass |
+| API | Spring Boot 2.7.18 (`javax.*` namespace), Spring Security (stateless JWT), Bean Validation, springdoc OpenAPI |
+| ORM / Persistence | Plain Hibernate 5.6 (`hibernate-core`), configured by `hibernate.cfg.xml` |
+| Database | Oracle Database (ojdbc8) |
+| Reporting | JasperReports 7.0.7 + `jasperreports-pdf` (OpenPDF) |
+| Language / Build | Java 17, Maven 3 (backend) · Node.js + npm (frontend) |
 
 ---
 
-### Package Structure
+## Project Structure
 
 ```
-com.hospital
-├── DbConfig/           # Hibernate session factory setup
-│   ├── HibernateDriver.java
-│   └── HibernateUtil.java
-├── models/             # JPA entity classes (mapped to DB tables)
-│   ├── Patient, Doctor, Nurse, Accountant, Pharmatiest, Receptioniest
-│   ├── Employee, Drug, SelledDrug, Room, RoomType, BookBed
-│   ├── BloodGroup, Category, Disease, Lab, Xray
-│   ├── Message, NextOfKin, Qualification, WorkExperince
-│   ├── ShiftTime, NurseServiceTime, PatientDrugInvoice
-│   └── EmployeeStatatistic
-├── entities/           # DAO layer (CRUD operations via Hibernate)
-│   ├── HospitalService.java     # Central service facade
-│   ├── AdminDAO, DoctorDAO, NurseDAO, AccountantDAO
-│   ├── PharmatiestDAO, ReceptioniestDAO, EmployeeDAO
-│   └── UserDAO
-├── actions/            # Struts 2 Action classes (controller layer)
-│   ├── LoginAction
-│   ├── ProcessAction            # Dispatcher / shared actions
-│   ├── AdminAction, DoctorAction, PharmatiestAction
-│   ├── ReceptioniestAction, AccountancyAction
-│   ├── UserAction, ReportAction
-│   └── *Listener.java          # Struts 2 action interceptors
-├── authentication/     # Login service & session management
-│   ├── LoginService.java
-│   └── Process.java
-├── reports/            # JasperReports templates and generation
-│   ├── Invoice_Table_Based.jrxml / .jasper
-│   └── TestReports.java
-├── queries/            # Ad-hoc DB query helpers
-│   └── TestDbConnection.java
-└── utils/              # Shared utilities
-    ├── ActionType.java
-    ├── Entity.java
-    ├── FormateDate.java
-    └── PasswordEncryption.java
+hospital-management-system/
+├── backend/
+│   ├── pom.xml
+│   └── src/main/
+│       ├── java/com/hospital/
+│       │   ├── HospitalApplication.java   # Spring Boot entry point
+│       │   ├── api/                       # REST layer (config, controller, dto, exception, security, service)
+│       │   ├── DbConfig/                  # HibernateUtil / HibernateDriver
+│       │   ├── entities/                  # *DAO interfaces + HospitalService facade
+│       │   ├── models/                    # JPA entities and report DTOs
+│       │   ├── queries/                   # SeedData / TestDbConnection (seeding `main()` classes)
+│       │   └── utils/                     # Entity, FormateDate, PasswordEncryption
+│       └── resources/
+│           ├── application.yml
+│           ├── hibernate.cfg.xml          # git-ignored, holds real DB credentials
+│           ├── hibernate.cfg.xml.example
+│           └── reports/                   # employeeReport.jrxml, Invoice.jrxml, invoice_logo.png
+└── frontend/
+    ├── package.json, vite.config.ts
+    └── src/
+        ├── api/                           # Axios client + API types
+        ├── services/                      # One service per backend area
+        ├── contexts/ hooks/               # Auth, notification and theme state
+        ├── components/                    # admin, reception, doctor, nurse, clinical, pharmacy, accountant, messaging, profile, layout, guards, common
+        ├── pages/                         # Landing, Login, NotFound
+        └── utils/
 ```
 
 ---
 
-### Request Flow (MVC)
+## Request Flow
 
 ```
-Browser
+Browser (React SPA, http://localhost:5173)
+  │   Axios, Authorization: Bearer <JWT>
+  ▼
+Vite dev server  (proxies /api → http://localhost:8080)
   │
   ▼
-Struts 2 Filter  (StrutsPrepareAndExecuteFilter — intercepts /*)
+Spring Security filter chain  (JwtAuthenticationFilter, @PreAuthorize role checks)
   │
   ▼
-struts.xml routing  (e.g. admin_* → AdminAction, reception_* → ReceptioniestAction)
-  │
-  ▼
-Action class  (validates input, calls DAO)
-  │
-  ▼
-DAO / HospitalService  (Hibernate Session → Oracle DB)
-  │
-  ▼
-JSP view  (JSTL, rendered back to browser)
+@RestController  →  *Service  →  HospitalGateway (synchronized)  →  HospitalService (Hibernate Session → Oracle)
 ```
 
 ---
 
-### Role-Based Modules
+## Role-Based Modules
 
-| Role | Action Class | Main Views |
-|---|---|---|
-| Admin | `AdminAction` | `empmgmt.jsp`, `admin/` |
-| Doctor | `DoctorAction` | `dieseasePatient.jsp` |
-| Pharmacist | `PharmatiestAction` | `drugmgmt.jsp`, `selldrug.jsp` |
-| Receptionist | `ReceptioniestAction` | `patientmgmt.jsp`, `bookBed.jsp` |
-| Accountant | `AccountancyAction` | `computefees.jsp` |
-| All users | `UserAction`, `ReportAction` | `home.jsp`, `inbox.jsp`, reports |
+| Role | Frontend routes |
+|---|---|
+| Admin | `/admin/dashboard`, `/admin/employees`, `/admin/rooms`, `/admin/service-times` (Admin can also open the other roles' pages) |
+| Receptionist | `/reception/patients`, `/reception/book-bed` |
+| Doctor | `/doctor/diagnoses` |
+| Nurse, Lab, Xray | `/nurse/service-times`, `/clinical/patients` |
+| Pharmacist | `/pharmacy/drugs`, `/pharmacy/sales` |
+| Accountant | `/accountant/fees` |
+| All users | `/messages/inbox`, `/messages/sent`, `/messages/compose`, `/profile` |
 
----
-
-### Database Configuration
-
-Hibernate is configured in [`src/main/resources/hibernate.cfg.xml`](src/main/resources/hibernate.cfg.xml):
-
-```xml
-<property name="hibernate.connection.url">jdbc:oracle:thin:@//127.0.0.1:1521/FREEPDB1</property>
-<property name="hibernate.connection.username">hadeel</property>
-<property name="hibernate.connection.password">hadeel</property>
-<property name="hibernate.hbm2ddl.auto">update</property>
-```
-
-Schema is auto-created/updated by Hibernate on first run (`hbm2ddl.auto=update`).
+The same roles are enforced server-side with `@PreAuthorize` on every endpoint.
 
 ---
 
 ## Prerequisites
 
-- **Java JDK 17**
-- **Maven 3.x**
-- **Podman** — used to run Oracle DB and Tomcat as containers
-
----
-
-## Current Runtime Setup
-
-Both Oracle and Tomcat run inside a single Podman **pod** named `hospital`, sharing a network namespace. The WAR is bind-mounted directly from the build output into the Tomcat container — no manual copy step needed after a rebuild.
-
-```
-┌─── pod: hospital  (ports: 1521→1521, 8080→8080) ──────────────────────────┐
-│                                                                             │
-│  oracle   gvenzl/oracle-free:23-slim-faststart                             │
-│           ORACLE_SID=FREE   service name = FREEPDB1                        │
-│           APP_USER=hadeel   APP_USER_PASSWORD=hadeel                       │
-│           ORACLE_PASSWORD=sys_123  (SYS/SYSTEM password)                   │
-│                                                                             │
-│  tomcat   tomcat:9-jdk17                                                   │
-│           bind-mount:                                                       │
-│             ./target/HospitalSystemV2-1.0-SNAPSHOT.war                     │
-│             → /usr/local/tomcat/webapps/HospitalSystemV2.war               │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-Both containers share `localhost` inside the pod, so Hibernate connects to Oracle at `127.0.0.1:1521/FREEPDB1` with no extra network config.
+- **Java JDK 17** and **Maven 3.x**
+- **Node.js** and **npm**
+- **Podman** (or Docker) to run Oracle
 
 ---
 
@@ -158,155 +111,101 @@ git clone https://github.com/SuyashGupte/hospital-management-system.git
 cd hospital-management-system
 ```
 
-### 2. Set credentials
+### 2. Start Oracle
 
 ```bash
-bash setup-credentials.sh hadeel hadeel
-```
-
-This writes the DB username and password into [`src/main/resources/hibernate.cfg.xml`](src/main/resources/hibernate.cfg.xml).
-To use different credentials, pass them as arguments:
-
-```bash
-bash setup-credentials.sh <app_user> <app_password>
-```
-
-> The `app_user` and `app_password` must match what you pass to `-e APP_USER` and `-e APP_USER_PASSWORD` when starting the Oracle container in step 5.
-
-### 3. Build the project
-
-```bash
-mvn clean package
-```
-
-The WAR is produced at `target/HospitalSystemV2-1.0-SNAPSHOT.war`.
-
-### 4. Create the Podman pod
-
-```bash
-podman pod create --name hospital -p 1521:1521 -p 8080:8080
-```
-
-### 5. Start Oracle
-
-```bash
-podman run -d --pod hospital \
+podman run -d \
   --name oracle \
-  --hostname hospital \
+  -p 1521:1521 \
   -e ORACLE_PASSWORD=sys_123 \
   -e APP_USER=hadeel \
   -e APP_USER_PASSWORD=hadeel \
   docker.io/gvenzl/oracle-free:23-slim-faststart
-```
 
-The image automatically creates the `hadeel` application user and the `FREEPDB1` pluggable database on first boot.
-
-**Wait for Oracle to be fully ready before proceeding — this is required.**
-
-The health check can take a long time. Instead, watch the logs for the ready message:
-
-```bash
+# Wait until ready (60–90 s)
 podman logs -f oracle 2>&1 | grep -m1 "DATABASE IS READY TO USE"
 ```
 
-This exits as soon as Oracle is ready (usually 60–90 seconds). Then proceed with the seed.
+The image creates the `hadeel` application user and the `FREEPDB1` service on first boot.
 
-### 6. Seed the database (first run only)
+### 3. Configure the database connection
 
-#### 6a. Bootstrap lookup data + admin user
+Copy [`backend/src/main/resources/hibernate.cfg.xml.example`](backend/src/main/resources/hibernate.cfg.xml.example) to `hibernate.cfg.xml` (same folder) if it is missing, then set the URL and credentials:
+
+```xml
+<property name="hibernate.connection.url">jdbc:oracle:thin:@//127.0.0.1:1521/FREEPDB1</property>
+<property name="hibernate.connection.username">hadeel</property>
+<property name="hibernate.connection.password">hadeel</property>
+<property name="hibernate.hbm2ddl.auto">update</property>
+```
+
+The schema is created and updated by Hibernate (`hbm2ddl.auto=update`). `hibernate.cfg.xml` is git-ignored; never commit real credentials.
+
+### 4. Seed the database (first run only)
 
 ```bash
-CP="target/classes:target/HospitalSystemV2-1.0-SNAPSHOT/WEB-INF/lib/*"
-java -cp "$CP" com.hospital.queries.TestDbConnection
+cd backend
+mvn compile dependency:copy-dependencies -DoutputDirectory=target/dependency -q
+java -cp "target/classes:target/dependency/*" com.hospital.queries.SeedData
 ```
 
-> If the seed hangs indefinitely, Oracle is not ready yet. Kill it (`Ctrl+C`), re-run the log watch above, then retry.
+`SeedData` loads lookup tables, the admin user and demo data, and is idempotent. Login: **`admin`** / **`123456`**; every demo employee uses password `123456`. If it hangs, Oracle is not ready yet: stop it, wait for the ready message above and retry. See [`backend/README.md`](backend/README.md) for what gets inserted.
 
-#### 6b. Load demo staff, patients, rooms, and drugs (optional)
+### 5. Start the backend
 
 ```bash
-CP="target/classes:target/HospitalSystemV2-1.0-SNAPSHOT/WEB-INF/lib/*"
-mkdir -p target/sample-data
-javac -cp "$CP" -d target/sample-data sample-data/SampleData.java
-java  -cp "target/sample-data:$CP" SampleData
+cd backend
+mvn spring-boot:run
 ```
 
-Idempotent — exits immediately if a Doctor record already exists. Every demo employee has password `123456`.
+API: <http://localhost:8080/api> · Swagger UI: <http://localhost:8080/swagger-ui.html>
 
-#### 6c. Load demo inbox messages (optional)
+Use `mvn spring-boot:run`, not `java -jar`: JasperReports compiles `.jrxml` templates at runtime and needs the full classpath.
+
+### 6. Start the frontend
 
 ```bash
-podman exec -i oracle sqlplus hadeel/hadeel@//localhost:1521/FREEPDB1 @/dev/stdin \
-  < sample-data/messages.sql
+cd frontend
+npm install
+npm run dev
 ```
 
-### 7. Start Tomcat
+Open <http://localhost:5173>. The dev server proxies `/api` to `http://localhost:8080`.
 
-```bash
-podman run -d --pod hospital \
-  --name tomcat \
-  --hostname hospital \
-  -v "$(pwd)/target/HospitalSystemV2-1.0-SNAPSHOT.war:/usr/local/tomcat/webapps/HospitalSystemV2.war:ro" \
-  docker.io/library/tomcat:9-jdk17
-```
+Both servers can also be started together from VS Code with the **Launch Full Stack Application** task (`.vscode/tasks.json`).
 
-### 8. Access the application
+### Useful commands
 
-```
-http://localhost:8080/HospitalSystemV2/
-```
-
-Login: **username** `admin` · **password** `123456`
+| Command | Purpose |
+|---|---|
+| `cd backend && mvn clean package` | Build the backend jar (`target/hospital-backend-1.0-SNAPSHOT.jar`) |
+| `cd frontend && npm run build` | Type-check and build the frontend into `frontend/dist` |
+| `cd frontend && npm run lint` | Lint the frontend with oxlint |
 
 ---
 
-### Redeploying after a code change
+## Configuration
 
-The WAR is bind-mounted read-only, so just rebuild and restart Tomcat:
+Backend settings are in [`application.yml`](backend/src/main/resources/application.yml) and can be overridden with environment variables:
 
-```bash
-mvn clean package
-podman restart tomcat
-```
-
----
-
-## Project Screenshots
-
-### Home Page
-![home](https://user-images.githubusercontent.com/11550708/27002545-accfd84e-4d99-11e7-9252-3ca14829f4b4.PNG)
-
-### Mobile View
-![mobileview](https://user-images.githubusercontent.com/11550708/27002547-aced4104-4d99-11e7-86b2-cad04e5c0d47.PNG)
-
-### Messaging
-![viewallsentmails](https://user-images.githubusercontent.com/11550708/27002543-acb02832-4d99-11e7-9772-3dbf3d094872.PNG) ![compose](https://user-images.githubusercontent.com/11550708/27002555-ad34d654-4d99-11e7-81d8-11f8f1b335bf.PNG)
-
-### Statistics
-![statisticpage](https://user-images.githubusercontent.com/11550708/27002556-ad53f408-4d99-11e7-8a32-8e6adc9398ca.PNG)
-
-### Drug Invoice
-![druginvoice](https://user-images.githubusercontent.com/11550708/27002557-ad891e8a-4d99-11e7-8651-324a25fe8fd3.PNG)
-
-### Employee Report
-![employeereport](https://user-images.githubusercontent.com/11550708/27002549-ad0e75a4-4d99-11e7-9226-8e1372e9a679.PNG)
-
-### Pharmacy
-![pharmacy](https://user-images.githubusercontent.com/11550708/27002550-ad0ec4c8-4d99-11e7-95ac-fa8e9008a335.PNG) ![selldrug](https://user-images.githubusercontent.com/11550708/27002554-ad317e1e-4d99-11e7-8776-d4f55758286e.PNG)
-
-### Patient Management
-![bookbed](https://user-images.githubusercontent.com/11550708/27002544-acb60e64-4d99-11e7-8e3f-ffdd88afd3de.PNG) ![patient](https://user-images.githubusercontent.com/11550708/27002548-acf6d480-4d99-11e7-812d-1d82413682c8.PNG)
+| Variable | Default | Purpose |
+|---|---|---|
+| `SERVER_PORT` | `8080` | API port |
+| `JWT_SECRET` | dev placeholder | HS256 signing key (at least 32 characters). Override outside local development |
+| `JWT_EXPIRATION_MINUTES` | `120` | Token lifetime |
+| `CORS_ALLOWED_ORIGINS` | localhost/127.0.0.1 on ports 3000, 5173, 5174 | Allowed browser origins |
 
 ---
 
 ## Built With
 
-- [Apache Struts 2](https://struts.apache.org/) — MVC framework
-- [Hibernate ORM](https://hibernate.org/) — persistence
-- [Oracle Database](https://www.oracle.com/database/) — relational database
-- [JasperReports](https://community.jaspersoft.com/) — report generation
-- [Maven](https://maven.apache.org/) — build and dependency management
+- [Spring Boot](https://spring.io/projects/spring-boot) and [Spring Security](https://spring.io/projects/spring-security): REST API and JWT auth
+- [Hibernate ORM](https://hibernate.org/): persistence
+- [Oracle Database](https://www.oracle.com/database/): relational database
+- [JasperReports](https://community.jaspersoft.com/): report generation
+- [React](https://react.dev/), [Vite](https://vite.dev/) and [Carbon Design System](https://carbondesignsystem.com/): frontend
+- [Maven](https://maven.apache.org/) and [npm](https://www.npmjs.com/): build tooling
 
 ## Authors
 
-- **Salah Atwa** — [GitHub](https://github.com/salahatwa) · [LinkedIn](https://www.linkedin.com/in/salah-atwa/)
+- **Salah Atwa** (original Struts/JSP application): [GitHub](https://github.com/salahatwa) · [LinkedIn](https://www.linkedin.com/in/salah-atwa/)

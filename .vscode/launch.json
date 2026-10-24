@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Full Stack Application",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "echo 'Launching Full Stack Application in split terminals...'",
+      "preLaunchTask": "Launch Full Stack Application"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "modernizationPaths": [
+    {
+      "frontend": "React",
+      "backend": "JEE",
+      "description": "Replace JSP and Struts views with a React SPA backed by JAX-RS REST resources on the existing Tomcat/JEE stack. Reuse Hibernate entities and HospitalService behind DTO-based endpoints. Lowest disruption; the largest ecosystem and AI tooling support.",
+      "riskAssessment": "Medium",
+      "keyTechnicalChallenges": "Replace scriptlet DAO calls with REST DTOs; extract listener logic from HttpServletRequest; add token or session auth plus server-side role checks; make HospitalService thread-safe; convert multipart upload and PDF streaming."
+    },
+    {
+      "frontend": "React",
+      "backend": "Quarkus",
+      "description": "Rebuild the backend as Quarkus REST services with Hibernate ORM/Panache and a React SPA. Gains fast startup, container-native packaging and a modern developer experience, at the cost of a platform change from the Tomcat WAR.",
+      "riskAssessment": "High",
+      "keyTechnicalChallenges": "Port javax to jakarta and Hibernate 5 to 6 with Oracle dialect; replace singleton listeners with CDI beans; introduce OIDC or JWT security; rewrite Jasper PDF streaming; redo Podman/Tomcat deployment as Quarkus containers."
+    },
+    {
+      "frontend": "Vue.js",
+      "backend": "JEE",
+      "description": "Introduce a Vue 3 SPA (Pinia, Vue Router) consuming JAX-RS endpoints added on the current JEE/Tomcat backend. Incremental route-by-route migration of role dashboards with smaller learning curve for JSP teams.",
+      "riskAssessment": "Medium",
+      "keyTechnicalChallenges": "Decouple JSP scriptlet data access into REST DTOs; map ActionType redirect flags to API responses; implement role-based route guards plus server-side authorization; handle multipart photo upload and PDF downloads; configure CORS and build pipeline."
+    },
+    {
+      "frontend": "Vue.js",
+      "backend": "Quarkus",
+      "description": "Vue 3 SPA with a Quarkus REST backend using Panache and CDI. Delivers a lightweight modern stack with fast builds, but combines a frontend rewrite with a full backend platform migration.",
+      "riskAssessment": "High",
+      "keyTechnicalChallenges": "Migrate javax to jakarta and Hibernate 5 to 6; replace Struts dispatcher and listeners with REST resources and CDI services; add JWT/OIDC with Pinia auth state; port Jasper reports; rework Oracle schema handling from hbm2ddl to Flyway."
+    },
+    {
+      "frontend": "Angular",
+      "backend": "JEE",
+      "description": "Angular SPA with typed services and route guards calling JAX-RS endpoints on the existing JEE backend. Strong structure and TypeScript fit large role-based apps, but needs more up-front architecture than React or Vue.",
+      "riskAssessment": "High",
+      "keyTechnicalChallenges": "Define DTO contracts and OpenAPI for about 30 operations; implement HttpInterceptor auth with role guards; replace scriptlet-driven lists with RxJS services and reactive forms; handle dynamic qualification rows, multipart upload and PDF blobs; Angular CLI and WAR build integration."
+    },
+    {
+      "frontend": "Angular",
+      "backend": "Quarkus",
+      "description": "Angular SPA with a Quarkus REST backend. Most opinionated enterprise stack on both tiers, offering strong typing and cloud-native deployment but requiring the broadest rewrite and skill ramp-up.",
+      "riskAssessment": "Very High",
+      "keyTechnicalChallenges": "Simultaneous frontend rewrite and javax to jakarta, Hibernate 6 and Quarkus migration; build OpenAPI-first contracts; implement OIDC with Angular guards and interceptors; replace shared Hibernate session; port Jasper and rebuild CI/CD and container deployment."
+    }
+  ]
+}

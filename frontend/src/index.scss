@@ -1,0 +1,58 @@
+@use '@carbon/react';
+
+// Global styling
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--cds-background);
+  color: var(--cds-text-primary);
+  min-height: 100vh;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+// Carbon header is fixed at 3rem (48px) height
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  padding-top: calc(3rem + 1.5rem); // header height + spacing
+  background-color: var(--cds-background);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+// When sidebar is expanded (16rem = 256px Carbon sidenav width)
+.main-content--with-sidenav {
+  padding-left: calc(16rem + 1.5rem);
+  transition: padding-left 0.11s cubic-bezier(0.2, 0, 1, 0.9);
+}
+
+// When sidebar is collapsed (3rem = 48px Carbon sidenav collapsed width)
+.main-content--sidenav-collapsed {
+  padding-left: calc(3rem + 1.5rem);
+  transition: padding-left 0.11s cubic-bezier(0.2, 0, 1, 0.9);
+}
+
+// No sidebar (login page, landing page)
+.main-content--full {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+// Ensure Carbon's Content component doesn't add conflicting padding
+.cds--content {
+  padding: 0 !important;
+}
