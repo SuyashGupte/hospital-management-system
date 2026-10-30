@@ -130,7 +130,7 @@ Schema is auto-created/updated by Hibernate on first run (`hbm2ddl.auto=update`)
 Both Oracle and Tomcat run inside a single Podman **pod** named `hospital`, sharing a network namespace. The WAR is bind-mounted directly from the build output into the Tomcat container — no manual copy step needed after a rebuild.
 
 ```
-┌─── pod: hospital  (ports: 1521→1521, 8000→8080) ──────────────────────────┐
+┌─── pod: hospital  (ports: 1522→1521, 8000→8080) ──────────────────────────┐
 │                                                                             │
 │  oracle-legacy  gvenzl/oracle-free:23-slim-faststart                       │
 │                 ORACLE_SID=FREE   service name = FREEPDB1                  │
@@ -184,7 +184,7 @@ The WAR is produced at `target/HospitalSystemV2-1.0-SNAPSHOT.war`.
 ### 4. Create the Podman pod
 
 ```bash
-podman pod create --name hospital -p 1521:1521 -p 8000:8080
+podman pod create --name hospital -p 1522:1521 -p 8000:8080
 ```
 
 ### 5. Start Oracle

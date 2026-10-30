@@ -3,9 +3,9 @@
 <hibernate-configuration>
   <session-factory>
     <property name="hibernate.connection.driver_class">oracle.jdbc.OracleDriver</property>
-    <property name="hibernate.connection.url">jdbc:oracle:thin:@//127.0.0.1:1521/FREEPDB1</property>
-    <property name="hibernate.connection.username">YOUR_APP_USER</property>
-    <property name="hibernate.connection.password">YOUR_APP_PASSWORD</property>
+    <property name="hibernate.connection.url">jdbc:oracle:thin:@//127.0.0.1:1522/FREEPDB1</property>
+    <property name="hibernate.connection.username">hadeel</property>
+    <property name="hibernate.connection.password">hadeel</property>
     <property name="hibernate.dialect">org.hibernate.dialect.Oracle10gDialect</property>
     <!--  <property name="hibernate.default_schema">hospital</property> -->
     <property name="hibernate.show_sql">false</property>
